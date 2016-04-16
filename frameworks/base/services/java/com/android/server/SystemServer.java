@@ -312,6 +312,7 @@ public final class SystemServer {
         Installer installer = mSystemServiceManager.startService(Installer.class);
 
         // Activity manager runs the show.
+        // [AMS] 1.启动AMS
         mActivityManagerService = mSystemServiceManager.startService(
                 ActivityManagerService.Lifecycle.class).getService();
         mActivityManagerService.setSystemServiceManager(mSystemServiceManager);
@@ -358,6 +359,7 @@ public final class SystemServer {
         AttributeCache.init(mSystemContext);
 
         // Set up the Application instance for the system process and get started.
+        // [AMS] 2.调用setSystemProcess方法
         mActivityManagerService.setSystemProcess();
     }
 
@@ -455,6 +457,7 @@ public final class SystemServer {
                     mFactoryTestMode == FactoryTest.FACTORY_TEST_LOW_LEVEL);
 
             Slog.i(TAG, "System Content Providers");
+            // [AMS] 3.调用installSystemProviders方法
             mActivityManagerService.installSystemProviders();
 
             Slog.i(TAG, "Vibrator Service");
@@ -471,6 +474,7 @@ public final class SystemServer {
 
             Slog.i(TAG, "Init Watchdog");
             final Watchdog watchdog = Watchdog.getInstance();
+            // [AMS] 注册到watchdog
             watchdog.init(context, mActivityManagerService);
 
             Slog.i(TAG, "Input Manager");
@@ -483,6 +487,7 @@ public final class SystemServer {
             ServiceManager.addService(Context.WINDOW_SERVICE, wm);
             ServiceManager.addService(Context.INPUT_SERVICE, inputManager);
 
+            // [AMS] 关联WindowManager
             mActivityManagerService.setWindowManager(wm);
 
             inputManager.setWindowManagerCallbacks(wm.getInputMonitor());
@@ -576,6 +581,7 @@ public final class SystemServer {
         }
 
         try {
+            // [AMS] 通过WindowsManager显示“正在启动应用”
             ActivityManagerNative.getDefault().showBootMessage(
                     context.getResources().getText(
                             com.android.internal.R.string.android_upgrading_starting_apps),
@@ -961,6 +967,7 @@ public final class SystemServer {
 
         // Before things start rolling, be sure we have decided whether
         // we are in safe mode.
+        // [AMS] 根据是否启动到安全模式，开启或禁用JIT编译
         final boolean safeMode = wm.detectSafeMode();
         if (safeMode) {
             mActivityManagerService.enterSafeMode();
@@ -1061,6 +1068,7 @@ public final class SystemServer {
         // where third party code can really run (but before it has actually
         // started launching the initial applications), for us to complete our
         // initialization.
+        // [AMS] 4.调用systemReady方法
         mActivityManagerService.systemReady(new Runnable() {
             @Override
             public void run() {
