@@ -22,3 +22,5 @@ Step-2: 调用SetProcessService方法
 Step-3 调用installSystemProviders方法
     1.调用 generateApplicationProvidersLocked 查询Content Provider
     2.调用 ActivityThread.installSystemProviders 安装Content Provider
+        1.调用installProvider方法创建ContentProvider，存入ContentProviderHolder中
+        2.调用publishContentProvider方法向AMS发布该ContentProvider

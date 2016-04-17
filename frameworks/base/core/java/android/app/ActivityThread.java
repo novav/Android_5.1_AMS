@@ -4591,15 +4591,17 @@ public final class ActivityThread {
                 buf.append(cpi.name);
                 Log.i(TAG, buf.toString());
             }
+            // [AMS] 调用installProvider，返回ContentProviderHolder
             IActivityManager.ContentProviderHolder cph = installProvider(context, null, cpi,
                     false /*noisy*/, true /*noReleaseNeeded*/, true /*stable*/);
             if (cph != null) {
                 cph.noReleaseNeeded = true;
-                results.add(cph);
+                results.add(cph);   // 存入results中，用于发布
             }
         }
 
         try {
+            // [AMS] 想ActivityManagerService发布ContentProvider
             ActivityManagerNative.getDefault().publishContentProviders(
                 getApplicationThread(), results);
         } catch (RemoteException ex) {
