@@ -8931,6 +8931,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     // =========================================================
 
     /* 那个Content Provider满足此处查询条件：SettingProvider
+    *  frameworks/base/packages/settingsprovider/
     */
     private final List<ProviderInfo> generateApplicationProvidersLocked(ProcessRecord app) {
         List<ProviderInfo> providers = null;
@@ -9624,6 +9625,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         enforceNotIsolatedCaller("publishContentProviders");
         synchronized (this) {
+            // [AMS] 获取调用方进程的ProcessRecord
             final ProcessRecord r = getRecordForAppLocked(caller);
             if (DEBUG_MU)
                 Slog.v(TAG_MU, "ProcessRecord uid = " + r.uid);
@@ -9636,23 +9638,27 @@ public final class ActivityManagerService extends ActivityManagerNative
 
             final long origId = Binder.clearCallingIdentity();
 
+            // [AMS] 遍历传入的列表，该列表的元素是ContentProviderHolder，其中一个元素就存储了本例中分析的SettingsProvider
             final int N = providers.size();
             for (int i=0; i<N; i++) {
                 ContentProviderHolder src = providers.get(i);
                 if (src == null || src.info == null || src.provider == null) {
                     continue;
                 }
+                // [AMS] 从调用进程中获取ContentProviderRecord
                 ContentProviderRecord dst = r.pubProviders.get(src.info.name);
                 if (DEBUG_MU)
                     Slog.v(TAG_MU, "ContentProviderRecord uid = " + dst.uid);
                 if (dst != null) {
                     ComponentName comp = new ComponentName(dst.info.packageName, dst.info.name);
+                    // [AMS] AMS内部通过mProviderMap以组件名为键保存Content Provider信息
                     mProviderMap.putProviderByClass(comp, dst);
                     String names[] = dst.info.authority.split(";");
+                    // [AMS] 同时以authority为键保存Content Provider信息
                     for (int j = 0; j < names.length; j++) {
                         mProviderMap.putProviderByName(names[j], dst);
                     }
-
+                    // [AMS] 等待启动的Content Provider，一旦启动并发布，将从该列表删除
                     int NL = mLaunchingProviders.size();
                     int j;
                     for (j=0; j<NL; j++) {
@@ -9664,7 +9670,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                     synchronized (dst) {
                         dst.provider = src.provider;
+                        // [AMS] ContentProviderRecord需要关联ProcessRecord
                         dst.proc = r;
+                        // [AMS] 发布Content Provider后，需要调整进程的OOM adj值
                         dst.notifyAll();
                     }
                     updateOomAdjLocked(r);

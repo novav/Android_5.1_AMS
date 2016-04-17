@@ -22,5 +22,10 @@ Step-2: 调用SetProcessService方法
 Step-3 调用installSystemProviders方法
     1.调用 generateApplicationProvidersLocked 查询Content Provider
     2.调用 ActivityThread.installSystemProviders 安装Content Provider
-        1.调用installProvider方法创建ContentProvider，存入ContentProviderHolder中
-        2.调用publishContentProvider方法向AMS发布该ContentProvider
+        <1>.调用installProvider方法创建ContentProvider，存入ContentProviderHolder中
+        <2>.调用publishContentProviders方法向AMS发布该ContentProvider
+            （1，根据调用者传入的IApplicationThread参数，获取进程的ProcessRecord
+              2，将ContentProvider信息存入ActivityManagerService的成员变量mProviderMap中，存储方法有两种，即对应两种检索方法
+              3，mLaunchingProvider中存储了Client请求使用的Content Provider信息，当前ContentProvider已启动，因此需要从mLaunchingProvider中移除该Content Provider的信息
+              4，强Content Provider与其ProcessRecord关联
+              5，通知Client，其请求使用Content Provider已发布）
