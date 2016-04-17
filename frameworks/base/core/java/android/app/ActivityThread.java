@@ -4964,6 +4964,8 @@ public final class ActivityThread {
             }
             Context c = null;
             ApplicationInfo ai = info.applicationInfo;
+            // [AMS] context即mInitialApplication,表示framework-res.apk
+            //      ai是SettingProvider对应的应用信息，这里不相等
             if (context.getPackageName().equals(ai.packageName)) {
                 c = context;
             } else if (mInitialApplication != null &&
@@ -4971,6 +4973,7 @@ public final class ActivityThread {
                 c = mInitialApplication;
             } else {
                 try {
+                    // [AMS] 创建SettingProvider对应的Context
                     c = context.createPackageContext(ai.packageName,
                             Context.CONTEXT_INCLUDE_CODE);
                 } catch (PackageManager.NameNotFoundException e) {
@@ -4985,9 +4988,12 @@ public final class ActivityThread {
                 return null;
             }
             try {
+                // [AMS] 通过Context获取类加载器
                 final java.lang.ClassLoader cl = c.getClassLoader();
+                // [AMS] 反射创建SettingProvider的实例
                 localProvider = (ContentProvider)cl.
                     loadClass(info.name).newInstance();
+                // [AMS] 返回Content Provider的mTransport成员变量，Content Provider需要发布发到AMS，因此需要一个Binder服务接口
                 provider = localProvider.getIContentProvider();
                 if (provider == null) {
                     Slog.e(TAG, "Failed to instantiate class " +
@@ -4998,6 +5004,7 @@ public final class ActivityThread {
                 if (DEBUG_PROVIDER) Slog.v(
                     TAG, "Instantiating local provider " + info.name);
                 // XXX Need to create the correct context for this provider.
+                // [AMS] 设置Content Provider 的权限并调用其子类的onCreate方法，本例中即调用SettingsProvider的onCreate方法
                 localProvider.attachInfo(c, info);
             } catch (java.lang.Exception e) {
                 if (!mInstrumentation.onException(null, e)) {
@@ -5020,6 +5027,7 @@ public final class ActivityThread {
                     + " / " + info.name);
             IBinder jBinder = provider.asBinder();
             if (localProvider != null) {
+                // [AMS] 查询是否发布过该Content Provider
                 ComponentName cname = new ComponentName(info.packageName, info.name);
                 ProviderClientRecord pr = mLocalProvidersByName.get(cname);
                 if (pr != null) {
@@ -5027,17 +5035,23 @@ public final class ActivityThread {
                         Slog.v(TAG, "installProvider: lost the race, "
                                 + "using existing local provider");
                     }
-                    provider = pr.mProvider;
+                    provider = pr.mProvider;    // 使用已用的
                 } else {
+                    // 以ProviderInfo为参数构造holder，ProviderInfo存储了ContentProvider的权限，和AndroidManifest.xml中android:authorities属性值
                     holder = new IActivityManager.ContentProviderHolder(info);
+                    // holder存储Provider的Binder服务接口
                     holder.provider = provider;
                     holder.noReleaseNeeded = true;
+                    // [AMS] 创建ProviderClientRecord,并将其存入mProviderMap中，android:authorities属性值以';'分隔,这里以每个authority为键存储ProviderClientRecord
                     pr = installProviderAuthoritiesLocked(provider, localProvider, holder);
+                    // 以Binder为键值存储ProviderClientRecord
                     mLocalProviders.put(jBinder, pr);
+                    // 以组件名为键存储ProviderClientRecord
                     mLocalProvidersByName.put(cname, pr);
                 }
                 retHolder = pr.mHolder;
             } else {
+                // [AMS] 获取ContentProvider的计数引用
                 ProviderRefCount prc = mProviderRefCountMap.get(jBinder);
                 if (prc != null) {
                     if (DEBUG_PROVIDER) {
@@ -5047,6 +5061,7 @@ public final class ActivityThread {
                     // ref count, releasing the old one...  but only if
                     // release is needed (that is, it is not running in the
                     // system process).
+                    // 更新引用计数
                     if (!noReleaseNeeded) {
                         incProviderRefLocked(prc, stable);
                         try {
@@ -5057,6 +5072,7 @@ public final class ActivityThread {
                         }
                     }
                 } else {
+                    // 对应prc为null，添加新的计数引用
                     ProviderClientRecord client = installProviderAuthoritiesLocked(
                             provider, localProvider, holder);
                     if (noReleaseNeeded) {
