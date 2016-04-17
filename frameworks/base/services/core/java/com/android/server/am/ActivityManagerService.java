@@ -2060,6 +2060,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     public ActivityManagerService(Context systemContext) {
         mContext = systemContext;
         mFactoryTest = FactoryTest.getMode();
+        // [AMS] 创建 ActivityThread对象存给 mSystemThread
         mSystemThread = ActivityThread.currentActivityThread();
 
         Slog.i(TAG, "Memory class: " + ActivityManager.staticGetMemoryClass());
@@ -2069,6 +2070,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         mHandlerThread.start();
         mHandler = new MainHandler(mHandlerThread.getLooper());
 
+        // [AMS] 加入两个BroadcastQueue
         mFgBroadcastQueue = new BroadcastQueue(this, mHandler,
                 "foreground", BROADCAST_FG_TIMEOUT, false);
         mBgBroadcastQueue = new BroadcastQueue(this, mHandler,
@@ -2080,9 +2082,10 @@ public final class ActivityManagerService extends ActivityManagerNative
         mProviderMap = new ProviderMap(this);
 
         // TODO: Move creation of battery stats service outside of activity manager service.
-        File dataDir = Environment.getDataDirectory();
-        File systemDir = new File(dataDir, "system");
+        File dataDir = Environment.getDataDirectory();  // [AMS] 即/data/目录
+        File systemDir = new File(dataDir, "system");   // [AMS]   /data/system/目录
         systemDir.mkdirs();
+        // [AMS]创建BatteryStateService服务，该服务负责统计各个模块的耗电量情况，统计信息存入/data/system/batterystate.bin文件
         mBatteryStatsService = new BatteryStatsService(systemDir, mHandler);
         mBatteryStatsService.getActiveStatistics().readLocked();
         mBatteryStatsService.getActiveStatistics().writeAsyncLocked();
@@ -2101,22 +2104,27 @@ public final class ActivityManagerService extends ActivityManagerNative
         mUserLru.add(Integer.valueOf(0));
         updateStartedUserArrayLocked();
 
+        // [AMS] 获取属性设置信息
         GL_ES_VERSION = SystemProperties.getInt("ro.opengles.version",
             ConfigurationInfo.GL_ES_VERSION_UNDEFINED);
 
         mTrackingAssociations = "1".equals(SystemProperties.get("debug.track-associations"));
 
+        // [AMS] 设置属性配置信息，包括字体，语言，屏幕，导航，布局，MCC, MNC等信息
         mConfiguration.setToDefaults();
         mConfiguration.locale = Locale.getDefault();
 
         mConfigurationSeq = mConfiguration.seq = 1;
+        // [AMS] ProcessState类型的数据，读取/proc/stat & /proc/loadavg, 用于统计CPU使用率和平均负载
         mProcessCpuTracker.init();
 
+        // [AMS] 解析/data/system/packages-compat.xml 该文件定义了需要以兼容模式运行的app，所谓兼容模式，即指兼容屏幕尺寸
         mCompatModePackages = new CompatModePackages(this, systemDir, mHandler);
         mIntentFirewall = new IntentFirewall(new IntentFirewallInterface(), mHandler);
         mStackSupervisor = new ActivityStackSupervisor(this);
         mTaskPersister = new TaskPersister(systemDir, mStackSupervisor);
 
+        // [AMS] 开启线程定期更新CPU的使用情况
         mProcessCpuThread = new Thread("CpuTracker") {
             @Override
             public void run() {
@@ -2147,6 +2155,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         };
 
+        // [AMS] 加入Watchdog监控
         Watchdog.getInstance().addMonitor(this);
         Watchdog.getInstance().addThread(mHandler);
     }
