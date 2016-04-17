@@ -2141,18 +2141,22 @@ public class PackageManagerService extends IPackageManager.Stub {
         enforceCrossUserPermission(Binder.getCallingUid(), userId, false, false, "get application info");
         // writer
         synchronized (mPackages) {
+            // [AMS] 首先从PackageManagerService.mPackages中查找包信息
             PackageParser.Package p = mPackages.get(packageName);
             if (DEBUG_PACKAGE_INFO) Log.v(
                     TAG, "getApplicationInfo " + packageName
                     + ": " + p);
             if (p != null) {
+                // [AMS] 然后从Settings.mPackages中查找包设置信息
                 PackageSetting ps = mSettings.mPackages.get(packageName);
                 if (ps == null) return null;
                 // Note: isEnabledLP() does not apply here - always return info
+                // [AMS] 由包设置信息和包信息创建应用程序信息
                 return PackageParser.generateApplicationInfo(
                         p, flags, ps.readUserState(userId), userId);
             }
             if ("android".equals(packageName)||"system".equals(packageName)) {
+                // [AMS] 由scanPackageLI开机扫描android包时赋值
                 return mAndroidApplication;
             }
             if ((flags & PackageManager.GET_UNINSTALLED_PACKAGES) != 0) {
