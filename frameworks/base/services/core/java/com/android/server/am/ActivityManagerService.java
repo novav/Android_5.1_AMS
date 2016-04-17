@@ -9889,11 +9889,13 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     final ProcessRecord newProcessRecordLocked(ApplicationInfo info, String customProcess,
             boolean isolated, int isolatedUid) {
+        // [AMS] 参数customProcess为system
         String proc = customProcess != null ? customProcess : info.processName;
+        // [AMS] 影响电池状态的信息
         BatteryStatsImpl.Uid.Proc ps = null;
         BatteryStatsImpl stats = mBatteryStatsService.getActiveStatistics();
         int uid = info.uid;
-        if (isolated) {
+        if (isolated) { //参数为false
             if (isolatedUid == 0) {
                 int userId = UserHandle.getUserId(uid);
                 int stepsLeft = Process.LAST_ISOLATED_UID - Process.FIRST_ISOLATED_UID + 1;

@@ -389,17 +389,18 @@ final class ProcessRecord {
     
     ProcessRecord(BatteryStatsImpl _batteryStats, ApplicationInfo _info,
             String _processName, int _uid) {
-        mBatteryStats = _batteryStats;
-        info = _info;
+        mBatteryStats = _batteryStats;  //[AMS] 记录电池状态
+        info = _info;   // [AMS] 保存android包的ApplicationInfo，即第一个运行于此进程的应用程序信息
         isolated = _info.uid != _uid;
-        uid = _uid;
-        userId = UserHandle.getUserId(_uid);
-        processName = _processName;
+        uid = _uid;     // 进程uid
+        userId = UserHandle.getUserId(_uid);    // 进程pid
+        processName = _processName;     // 进程名 AMS的值为system
         pkgList.put(_info.packageName, new ProcessStats.ProcessStateHolder(_info.versionCode));
+        // [AMS] 与进程有关的优先级和adj调整值
         maxAdj = ProcessList.UNKNOWN_ADJ;
         curRawAdj = setRawAdj = -100;
         curAdj = setAdj = -100;
-        persistent = false;
+        persistent = false;     // 默认为非“常驻进程”
         removed = false;
         lastStateTime = lastPssTime = nextPssTime = SystemClock.uptimeMillis();
     }
