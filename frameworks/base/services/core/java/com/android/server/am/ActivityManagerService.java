@@ -8930,9 +8930,12 @@ public final class ActivityManagerService extends ActivityManagerNative
     // CONTENT PROVIDERS
     // =========================================================
 
+    /* 那个Content Provider满足此处查询条件：SettingProvider
+    */
     private final List<ProviderInfo> generateApplicationProvidersLocked(ProcessRecord app) {
         List<ProviderInfo> providers = null;
         try {
+            // [AMS] 通过PackageManagerService查询满足条件的Context Provider
             providers = AppGlobals.getPackageManager().
                 queryContentProviders(app.processName, app.uid,
                         STOCK_PM_FLAGS | PackageManager.GET_URI_PERMISSION_PATTERNS);
@@ -8959,15 +8962,17 @@ public final class ActivityManagerService extends ActivityManagerNative
                     i--;
                     continue;
                 }
-
+                // [AMS] PackageManagerService对Content Provider的组织形式是ProviderInfo，此将转化为AMS的存储形式ContentProviderRecord
                 ComponentName comp = new ComponentName(cpi.packageName, cpi.name);
                 ContentProviderRecord cpr = mProviderMap.getProviderByClass(comp, userId);
                 if (cpr == null) {
                     cpr = new ContentProviderRecord(this, cpi, app.info, comp, singleton);
+                    // [AMS] 存入mProviderMap中
                     mProviderMap.putProviderByClass(comp, cpr);
                 }
                 if (DEBUG_MU)
                     Slog.v(TAG_MU, "generateApplicationProvidersLocked, cpi.uid = " + cpr.uid);
+                // [AMS] 存入ProcessRecord
                 app.pubProviders.put(cpi.name, cpr);
                 if (!cpi.multiprocess || !"android".equals(cpi.packageName)) {
                     // Don't add this if it is a platform component that is marked
@@ -8977,6 +8982,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     app.addPackage(cpi.applicationInfo.packageName, cpi.applicationInfo.versionCode,
                             mProcessStats);
                 }
+                // [AMS] 通过PackageManagerService，最终调用Install的dexopt方法对该APK进行DEX优化
                 ensurePackageDexOpt(cpi.applicationInfo.packageName);
             }
         }
@@ -9799,8 +9805,12 @@ public final class ActivityManagerService extends ActivityManagerNative
     public final void installSystemProviders() {
         List<ProviderInfo> providers;
         synchronized (this) {
+            // [AMS] 从AMS的mProcessName取出进程名为system的进程， userId 为System_UID的进程信息
+            //      该信息在setSystemProcess函数中设置过，即system_server
             ProcessRecord app = mProcessNames.get("system", Process.SYSTEM_UID);
+            // [AMS] 调用ActivityManagerService的方法，生成运行在system进程中的ProviderInfo，表示一个content Provider
             providers = generateApplicationProvidersLocked(app);
+            // [AMS] 过滤flags标记不为FLAG_SYSTEM 的非系统级APK(参考PMS)
             if (providers != null) {
                 for (int i=providers.size()-1; i>=0; i--) {
                     ProviderInfo pi = (ProviderInfo)providers.get(i);
@@ -9812,10 +9822,12 @@ public final class ActivityManagerService extends ActivityManagerNative
                 }
             }
         }
+        // [AMS] 调用ActivityThread的方法安装该Provider
         if (providers != null) {
             mSystemThread.installSystemProviders(providers);
         }
 
+        // [AMS] 监听Setting数据库的变化
         mCoreSettingsObserver = new CoreSettingsObserver(this);
 
         //mUsageStatsService.monitorPackages();

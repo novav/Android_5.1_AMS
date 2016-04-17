@@ -18,3 +18,7 @@ Step-2: 调用SetProcessService方法
     1.注册服务
     2.查询并处理ApplicationInfo
     3.创建并处理ProcessRecord
+
+Step-3 调用installSystemProviders方法
+    1.调用 generateApplicationProvidersLocked 查询Content Provider
+    2.调用 ActivityThread.installSystemProviders 安装Content Provider
