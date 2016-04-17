@@ -13,3 +13,8 @@ Step-1:启动AMS
     2.初始化一些系统运行的相关变量，如：耗电量，CPU使用率和负载等信息
     3.获取系统配置信息，如OpenGL版本，字体，语言，屏幕等信息
     4.将自身加入Android WatchDog监控 
+
+Step-2: 调用SetProcessService方法
+    1.注册服务
+    2.查询并处理ApplicationInfo
+    3.创建并处理ProcessRecord

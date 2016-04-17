@@ -1900,32 +1900,44 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
     };
 
+    // [AMS] Step-2
     public void setSystemProcess() {
         try {
+            // [AMS] 将AMS注册到ServerManager中，命名为"activity"
             ServiceManager.addService(Context.ACTIVITY_SERVICE, this, true);
             ServiceManager.addService(ProcessStats.SERVICE_NAME, mProcessStats);
+            // [AMS] 注册meminfo服务用于调试，起作用参考adb shell dumpsys meminfo
             ServiceManager.addService("meminfo", new MemBinder(this));
+            // [AMS] 注册gfxinfo服务用于调试，起作用参考adb shell dumpsys gfxinfo
             ServiceManager.addService("gfxinfo", new GraphicsBinder(this));
+            // [AMS] Android4.1中新加的服务，用于转存(dump)应用程序数据库信息
+            //      其作用参考adb shell dumpsys dbinfo
             ServiceManager.addService("dbinfo", new DbBinder(this));
+            // [AMS] 注册cpuinfo服务用于调试，起作用参考adb shell dumpsys cpuinfo
             if (MONITOR_CPU_USAGE) {
                 ServiceManager.addService("cpuinfo", new CpuBinder(this));
             }
+            // [AMS] 注册permission服务，用于检查进程的权限信息
             ServiceManager.addService("permission", new PermissionController(this));
 
+            // [AMS] packageManagerService查询包名为android的应用程序的ApplicationInfo信息
             ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(
                     "android", STOCK_PM_FLAGS);
+            // [AMS] 调用ActivityThread上的方法
             mSystemThread.installSystemApplicationInfo(info, getClass().getClassLoader());
 
+            // [AMS] 生成一个新的ProcessRecord类型的app对象，并将对象存入mProcessNames,mPidsSelfLocked
             synchronized (this) {
                 ProcessRecord app = newProcessRecordLocked(info, info.processName, false, 0);
-                app.persistent = true;
-                app.pid = MY_PID;
-                app.maxAdj = ProcessList.SYSTEM_ADJ;
+                app.persistent = true;  // 不能被回收
+                app.pid = MY_PID;   // system_server的进程ID
+                app.maxAdj = ProcessList.SYSTEM_ADJ;    //设置最大的ADJ
                 app.makeActive(mSystemThread.getApplicationThread(), mProcessStats);
                 mProcessNames.put(app.processName, app.uid, app);
                 synchronized (mPidsSelfLocked) {
                     mPidsSelfLocked.put(app.pid, app);
                 }
+                // 新加入一个APP，需要更新LRU，后续分析
                 updateLruProcessLocked(app, false, null);
                 updateOomAdjLocked();
             }
