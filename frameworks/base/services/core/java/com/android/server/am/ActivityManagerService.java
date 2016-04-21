@@ -11074,6 +11074,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     private static File getCalledPreBootReceiversFile() {
         File dataDir = Environment.getDataDirectory();
         File systemDir = new File(dataDir, "system");
+        // [AMS] 从/data/system/called_pre_boots.dat文件读取，上次启动已经处理过ACTION_PRE_BOOT_COMPLETED广播的组件
         File fname = new File(systemDir, CALLED_PRE_BOOTS_FILENAME);
         return fname;
     }
@@ -11159,6 +11160,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         } catch (RemoteException e) {
         }
         if (ris != null) {
+            // [AMS] 从ris中过滤掉非系统级别广播接收者
             for (int i=ris.size()-1; i>=0; i--) {
                 if ((ris.get(i).activityInfo.applicationInfo.flags
                         &ApplicationInfo.FLAG_SYSTEM) == 0) {
@@ -11170,6 +11172,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             // For User 0, load the version number. When delivering to a new user, deliver
             // to all receivers.
             if (userId == UserHandle.USER_OWNER) {
+                // [AMS] 从data/system/called_pre_boot.dat文件读取，上次启动时已经处理过 ACTION_PRE_BOOT_COMPLETED广播的组件
                 ArrayList<ComponentName> lastDoneReceivers = readLastDonePreBootReceivers();
                 for (int i=0; i<ris.size(); i++) {
                     ActivityInfo ai = ris.get(i).activityInfo;
@@ -11181,6 +11184,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                         i--;
                         // ...however, do keep it as one that has been done, so we don't
                         // forget about it when rewriting the file of last done receivers.
+                        // [AMS] 存储还未处理的 ACTION_PRE_BOOT_COMPLETED 广播组件
                         doneReceivers.add(comp);
                     }
                 }
@@ -11197,6 +11201,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 for (int j=0; j<users.length; j++) {
                     IIntentReceiver finisher = null;
                     // On last receiver and user, set up a completion callback
+                    // [AMS] 当最后一个广播接收者处理完毕后，执行回调函数
                     if (i == ris.size() - 1 && j == users.length - 1 && onFinishCallback != null) {
                         finisher = new IIntentReceiver.Stub() {
                             public void performReceive(Intent intent, int resultCode,
@@ -11211,12 +11216,13 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                     Slog.i(TAG, "Sending system update to " + intent.getComponent()
                             + " for user " + users[j]);
+                    // [AMS] 发送广播
                     broadcastIntentLocked(null, null, intent, null, finisher,
                             0, null, null, null, AppOpsManager.OP_NONE,
                             true, false, MY_PID, Process.SYSTEM_UID,
                             users[j]);
                     if (finisher != null) {
-                        waitingUpdate = true;
+                        waitingUpdate = true;   // [AMS] 说明此时在等待升级状态
                     }
                 }
             }
@@ -11227,6 +11233,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     public void systemReady(final Runnable goingCallback) {
         synchronized(this) {
+            // [AMS] mSystemReady默认为false，systemReady执行后赋值为true
             if (mSystemReady) {
                 // If we're done calling all the receivers, run the next "boot phase" passed in
                 // by the SystemServer
@@ -11248,6 +11255,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
 
             // Check to see if there are any update receivers to run.
+            // [AMS] mDidUpdate & mWaitingUpdate默认为false，systemReady执行后赋值为true
             if (!mDidUpdate) {
                 if (mWaitingUpdate) {
                     return;
@@ -11258,9 +11266,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                         synchronized (ActivityManagerService.this) {
                             mDidUpdate = true;
                         }
-                        writeLastDonePreBootReceivers(doneReceivers);
+                        writeLastDonePreBootReceivers(doneReceivers); // [AMS] 将doneReceivers写入called_pre_boots.bat
                         showBootMessage(mContext.getText(R.string.android_upgrading_complete),
-                                false);
+                                false); // [AMS] 显示‘即将完成启动’
                         systemReady(goingCallback);
                     }
                 }, doneReceivers, UserHandle.USER_OWNER);
@@ -11268,11 +11276,11 @@ public final class ActivityManagerService extends ActivityManagerNative
                 if (mWaitingUpdate) {
                     return;
                 }
-                mDidUpdate = true;
+                mDidUpdate = true;  // [AMS] true
             }
 
             mAppOpsService.systemReady();
-            mSystemReady = true;
+            mSystemReady = true;    // [AMS] true
         }
 
         ArrayList<ProcessRecord> procsToKill = null;

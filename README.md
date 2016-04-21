@@ -29,3 +29,17 @@ Step-3 调用installSystemProviders方法
               3，mLaunchingProvider中存储了Client请求使用的Content Provider信息，当前ContentProvider已启动，因此需要从mLaunchingProvider中移除该Content Provider的信息
               4，强Content Provider与其ProcessRecord关联
               5，通知Client，其请求使用Content Provider已发布）
+
+Step-4 调用systemReady方法
+    1.发送ACTION_PRE_BOOT_COMPLETED广播
+        systemReady第一部分工作是发送ACTION_PRE_BOOT_COMPLETED广播，可以将该部分视为预启动完毕阶段，目前接受此广播的有三个模块：
+            CalendarProvider：com.android.providers.calendar.CalederUpgradeReceiver
+            ContactsProvider：com.android.providers.contacts.ContactsUpgradeReceiver
+            MediaProvider：con.android.provider.media.MediaUpgradeReceiver
+            这三个接受者的主要作用是在启动阶段对数据库做一些预处理工作，例如创建数据库，或者更新数据库版本。
+            ACTION_PRE_BOOT_COMPELTED只被处理一次，处理过该广播的模块会在启动阶段存入data/system/called_pre_boots.dat文件中，因此第二次启动时，这些模块不需要再次处理该广播
+            如果没有可以处理该广播的接收者，此时即将mSystemReady赋值为true直接进入第二部分处理工作
+    2.清理预启动的非Persistent进程
+    3.读取Settings配置
+    4.运行Runnable回调接口
+    5.启动persistent应用程序和home
