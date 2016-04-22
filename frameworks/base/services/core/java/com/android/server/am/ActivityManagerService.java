@@ -11381,9 +11381,11 @@ public final class ActivityManagerService extends ActivityManagerNative
                 Integer.toString(mCurrentUserId), mCurrentUserId);
         mSystemServiceManager.startUser(mCurrentUserId);
 
+        // [HOIS-AMS] Step-5: 启动persistent应用程序和Home 2016/04/22 start @{
         synchronized (this) {
             if (mFactoryTest != FactoryTest.FACTORY_TEST_LOW_LEVEL) {
                 try {
+                    // [AMS] 从PM获取persistent应用程序的Applicationinfo
                     List apps = AppGlobals.getPackageManager().
                         getPersistentApplications(STOCK_PM_FLAGS);
                     if (apps != null) {
@@ -11392,8 +11394,10 @@ public final class ActivityManagerService extends ActivityManagerNative
                         for (i=0; i<N; i++) {
                             ApplicationInfo info
                                 = (ApplicationInfo)apps.get(i);
+                            // [AMS] 过滤掉Frameworks-res.apk,因为其已启动
                             if (info != null &&
                                     !info.packageName.equals("android")) {
+                                // [AMS] 启动应用程序
                                 addAppLocked(info, false, null /* ABI override */);
                             }
                         }
@@ -11404,8 +11408,11 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
 
             // Start up initial activity.
+            // [AMS] mBooting赋值为true，该状态对发送广播action_boot_completed至关重要
             mBooting = true;
+                // [AMS] 启动(栈顶4.4K)第一个Activity，默认为Home
             startHomeActivityLocked(mCurrentUserId, "systemReady");
+			// [HOIS-AMS] Step-5: 启动persistent应用程序和Home 2016/04/22 end @}
 
             try {
                 if (AppGlobals.getPackageManager().hasSystemUidErrors()) {

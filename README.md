@@ -56,3 +56,8 @@ Step-4 调用systemReady方法
             <c>: 启动软件看门狗watch dog
             可见一些服务依赖于AMS的运行状态，只有AMS本身万事俱备，才会通知其他一些系统服务进入SystemReady状态
     5.启动persistent应用程序和home
+        可见, M S在地物分钟在第五部分中还隐藏着一个重要操作:发送开机完成广播。这部分内容需要集合消息处理机制和应用程序启动过程才能真正理解。因此这里只列出其主要流程。
+        至此，M S在系统启动init2 阶段的使命已经完成了。
+
+章节小结：
+    文章详细分析了AM核心组成部分AmS在系统启动时所做的四个阶段的工作,着重分析了 AThread, Context, ActivityStack,SettingsProvider,ApplicationThread, Action_Boot_Completed等主要内容的实现。
