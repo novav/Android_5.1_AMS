@@ -11283,15 +11283,18 @@ public final class ActivityManagerService extends ActivityManagerNative
             mSystemReady = true;    // [AMS] true
         }
 
+        // [AMS] Step-4:2 clean no-persistent proc 2016/04/22 START @{
         ArrayList<ProcessRecord> procsToKill = null;
         synchronized(mPidsSelfLocked) {
+			// [AMS] mPidsSelfLocked以pid为键存储当前运行的应用程序的进程信息
             for (int i=mPidsSelfLocked.size()-1; i>=0; i--) {
                 ProcessRecord proc = mPidsSelfLocked.valueAt(i);
+                // [AMS] 找到不允许预先启动的进程，非persistent进程是不允许预先启动
                 if (!isAllowedWhileBooting(proc.info)){
                     if (procsToKill == null) {
                         procsToKill = new ArrayList<ProcessRecord>();
                     }
-                    procsToKill.add(proc);
+                    procsToKill.add(proc);  // [ANS] 加入到待清理列表
                 }
             }
         }
@@ -11301,6 +11304,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 for (int i=procsToKill.size()-1; i>=0; i--) {
                     ProcessRecord proc = procsToKill.get(i);
                     Slog.i(TAG, "Removing system update proc: " + proc);
+                    // [AMS] 清理进程在AMS中的信息，并杀死进
                     removeProcessLocked(proc, true, false, "system update done");
                 }
             }
@@ -11308,9 +11312,10 @@ public final class ActivityManagerService extends ActivityManagerNative
             // Now that we have cleaned up any update processes, we
             // are ready to start launching real processes and know that
             // we won't trample on them any more.
-            mProcessesReady = true;
+            mProcessesReady = true;     // [AMS] 清理后，第二阶段准备工作完成
         }
-        
+        // [AMS] Step-4:2  clean no-persistent proc 2016/04/22 end @}
+
         Slog.i(TAG, "System now ready");
         EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_AMS_READY,
             SystemClock.uptimeMillis());

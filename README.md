@@ -40,6 +40,7 @@ Step-4 调用systemReady方法
             ACTION_PRE_BOOT_COMPELTED只被处理一次，处理过该广播的模块会在启动阶段存入data/system/called_pre_boots.dat文件中，因此第二次启动时，这些模块不需要再次处理该广播
             如果没有可以处理该广播的接收者，此时即将mSystemReady赋值为true直接进入第二部分处理工作
     2.清理预启动的非Persistent进程
+        persistent进程是在AndroidManifest.xml中设置了Android:persistent="true"的应用程序，如framework-res.apk, SystemUI.apk, Phone.apk 这些进程需要常驻内存，不能被杀死
     3.读取Settings配置
     4.运行Runnable回调接口
     5.启动persistent应用程序和home
