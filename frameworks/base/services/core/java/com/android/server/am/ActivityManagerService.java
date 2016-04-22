@@ -11029,10 +11029,13 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     private void retrieveSettings() {
         final ContentResolver resolver = mContext.getContentResolver();
+        // [AMS] 读取Settings中设置的需要调试的App的包名
         String debugApp = Settings.Global.getString(
             resolver, Settings.Global.DEBUG_APP);
+        // [AMS] 读取Settings的wait_for_debug的配置       
         boolean waitForDebugger = Settings.Global.getInt(
             resolver, Settings.Global.WAIT_FOR_DEBUGGER, 0) != 0;
+        // [AMS] 读取Settings的always_finish_activities配置
         boolean alwaysFinishActivities = Settings.Global.getInt(
             resolver, Settings.Global.ALWAYS_FINISH_ACTIVITIES, 0) != 0;
         boolean forceRtl = Settings.Global.getInt(
@@ -11041,12 +11044,14 @@ public final class ActivityManagerService extends ActivityManagerNative
         SystemProperties.set(Settings.Global.DEVELOPMENT_FORCE_RTL, forceRtl ? "1":"0");
 
         Configuration configuration = new Configuration();
+        // [AMS] 读取Settings中用户偏好设置信息,目前只有font_scale信息
         Settings.System.getConfiguration(resolver, configuration);
         if (forceRtl) {
             // This will take care of setting the correct layout direction flags
             configuration.setLayoutDirection(configuration.locale);
         }
 
+        // [AMS] 将上述Settings配置信息存入AMS
         synchronized (this) {
             mDebugApp = mOrigDebugApp = debugApp;
             mWaitForDebugger = mOrigWaitForDebugger = waitForDebugger;
@@ -11324,6 +11329,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             // Make sure we have no pre-ready processes sitting around.
             
             if (mFactoryTest == FactoryTest.FACTORY_TEST_LOW_LEVEL) {
+                // [AMS] 工厂测试相关
                 ResolveInfo ri = mContext.getPackageManager()
                         .resolveActivity(new Intent(Intent.ACTION_FACTORY_TEST),
                                 STOCK_PM_FLAGS);
@@ -11356,7 +11362,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         }
 
+        // [AMS] Step-4:3  read Settings 2016/04/22 start @{
         retrieveSettings();
+        // [AMS] Step-4:3  read Settings 2016/04/22 end @}
         loadResourcesOnSystemReady();
 
         synchronized (this) {

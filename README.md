@@ -42,5 +42,11 @@ Step-4 调用systemReady方法
     2.清理预启动的非Persistent进程
         persistent进程是在AndroidManifest.xml中设置了Android:persistent="true"的应用程序，如framework-res.apk, SystemUI.apk, Phone.apk 这些进程需要常驻内存，不能被杀死
     3.读取Settings配置
+        RetrieveSettings主要是从设置中读去了一下四种配置信息
+            - Debug app 需要调试的应用程序包名
+            - Wait for dubugger如果设置为1，当启动debug_App时，该应用会等待调试器，如果设置为零，则正常启动
+            - Always finish activities如果设置为1， activity manager 会直接接触那些不再需要的activity，如果设置为零，咋遵循正常的生命周期。
+            - Font scale 与字体大小相关的设置
+        这些配置信息最终都存入AMS的相关成员变量中。
     4.运行Runnable回调接口
     5.启动persistent应用程序和home
