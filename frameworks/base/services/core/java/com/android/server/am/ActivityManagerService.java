@@ -11371,7 +11371,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             readGrantedUriPermissionsLocked();
         }
 
+        // [HIOS-AMS] Step-4: 执行Runnable回调接口  2016/04/22 start @{
         if (goingCallback != null) goingCallback.run();
+        // [HIOS-AMS] Step-4: 执行Runnable回调接口  2016/04/22 end @}
 
         mBatteryStatsService.noteEvent(BatteryStats.HistoryItem.EVENT_USER_RUNNING_START,
                 Integer.toString(mCurrentUserId), mCurrentUserId);

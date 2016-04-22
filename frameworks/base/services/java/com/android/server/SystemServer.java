@@ -1086,7 +1086,7 @@ public final class SystemServer {
                 WebViewFactory.prepareWebViewInSystemServer();
 
                 try {
-                    startSystemUi(context);
+                    startSystemUi(context);  // [AMS] step-4:1启动 SystemUiService
                 } catch (Throwable e) {
                     reportWtf("starting System UI", e);
                 }
@@ -1125,7 +1125,7 @@ public final class SystemServer {
                 } catch (Throwable e) {
                     reportWtf("Notifying AudioService running", e);
                 }
-                Watchdog.getInstance().start();
+                Watchdog.getInstance().start(); // [AMS] step-4:2 启动Watchdog
 
                 // It is now okay to let the various system services start their
                 // third party code...

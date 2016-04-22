@@ -43,10 +43,16 @@ Step-4 调用systemReady方法
         persistent进程是在AndroidManifest.xml中设置了Android:persistent="true"的应用程序，如framework-res.apk, SystemUI.apk, Phone.apk 这些进程需要常驻内存，不能被杀死
     3.读取Settings配置
         RetrieveSettings主要是从设置中读去了一下四种配置信息
-            - Debug app 需要调试的应用程序包名
-            - Wait for dubugger如果设置为1，当启动debug_App时，该应用会等待调试器，如果设置为零，则正常启动
-            - Always finish activities如果设置为1， activity manager 会直接接触那些不再需要的activity，如果设置为零，咋遵循正常的生命周期。
-            - Font scale 与字体大小相关的设置
+            <a>: Debug app 需要调试的应用程序包名
+            <b>: Wait for dubugger如果设置为1，当启动debug_App时，该应用会等待调试器，如果设置为零，则正常启动
+            <c>: Always finish activities如果设置为1， activity manager 会直接接触那些不再需要的activity，如果设置为零，咋遵循正常的生命周期。
+            <d>: Font scale 与字体大小相关的设置
         这些配置信息最终都存入AMS的相关成员变量中。
     4.运行Runnable回调接口
+        执行回调接口即执行传入systemReady的Runnable参数的run方法。
+        第四部分主要做了以下工作：
+            <a>: 启动系统服务：该服务会根据当前设备是平板电脑还是手机，分别启动不同的状态栏。跟服务定义于frameworks/Bese/packages/SystemUi。编译后为 SystemUi.apk
+            <b>: 执行其他系统服务的SystemReady 方法：包括batteryService network management service 等
+            <c>: 启动软件看门狗watch dog
+            可见一些服务依赖于AMS的运行状态，只有AMS本身万事俱备，才会通知其他一些系统服务进入SystemReady状态
     5.启动persistent应用程序和home
