@@ -61,4 +61,4 @@ Step-4 调用systemReady方法
 
 
 ## 章节小结：
-    - 文章详细分析了AM核心组成部分AmS在系统启动时所做的四个阶段的工作,着重分析了 AThread, Context, ActivityStack,SettingsProvider,ApplicationThread, Action_Boot_Completed等主要内容的实现。
+文章详细分析了AM核心组成部分AmS在系统启动时所做的四个阶段的工作,着重分析了 AThread, Context, ActivityStack,SettingsProvider,ApplicationThread, Action_Boot_Completed等主要内容的实现。
